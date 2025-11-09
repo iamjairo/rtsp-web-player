@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "cd server && npm start",
+    "server:install": "cd server && npm install",
+    "setup": "npm install && cd server && npm install"
   },
   "dependencies": {
     "hls.js": "^1.6.14",
