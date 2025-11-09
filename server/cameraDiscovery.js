@@ -16,6 +16,18 @@ class CameraDiscovery {
   }
 
   /**
+   * Sanitiza un ID para usarlo en URLs y rutas de archivos
+   */
+  sanitizeId(id) {
+    // Reemplaza caracteres problemáticos con guiones
+    return id
+      .replace(/[:/\\?#\[\]@!$&'()*+,;=]/g, '-') // Caracteres especiales de URL
+      .replace(/\s+/g, '-') // Espacios
+      .replace(/-+/g, '-') // Múltiples guiones consecutivos
+      .replace(/^-|-$/g, ''); // Guiones al inicio o final
+  }
+
+  /**
    * Obtiene la información de red local
    */
   getLocalNetworkInfo() {
@@ -115,7 +127,7 @@ class CameraDiscovery {
 
         deviceList.forEach((device) => {
           const cameraInfo = {
-            id: `onvif-${device.urn}`,
+            id: this.sanitizeId(`onvif-${device.urn}`),
             type: 'onvif',
             name: device.name || 'ONVIF Camera',
             manufacturer: device.hardware || 'Unknown',
@@ -173,7 +185,7 @@ class CameraDiscovery {
 
       tapoCameras.forEach(device => {
         const cameraInfo = {
-          id: `tapo-${device.deviceId}`,
+          id: this.sanitizeId(`tapo-${device.deviceId}`),
           type: 'tapo',
           name: device.alias || device.deviceModel || 'Tapo Camera',
           manufacturer: 'TP-Link',
