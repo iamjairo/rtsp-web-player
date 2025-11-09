@@ -1,0 +1,5 @@
+node_modules/
+streams/
+*.log
+.DS_Store
+.env
