@@ -75,10 +75,12 @@ class StreamManager {
         }
 
         // Detectar cuando el primer segmento está listo
-        if (!isResolved && (message.includes('Opening') || message.includes('segment_000.ts'))) {
+        // IMPORTANTE: Verificar que el mensaje sea específico de ESTE stream (incluya el streamId en el path)
+        if (!isResolved && message.includes(streamId) &&
+            (message.includes('segment_000.ts') || message.includes('index.m3u8'))) {
           // Esperar un poco para asegurar que el archivo m3u8 esté disponible
           setTimeout(() => {
-            if (!isResolved) {
+            if (!isResolved && fs.existsSync(outputPath)) {
               isResolved = true;
               const hlsUrl = `/streams/${streamId}/index.m3u8`;
               console.log(`[StreamManager] Stream ${streamId} iniciado exitosamente: ${hlsUrl}`);
@@ -119,13 +121,35 @@ class StreamManager {
         outputPath
       });
 
-      // Timeout de seguridad - si no se resuelve en 10 segundos, rechazar
+      // Verificación periódica del archivo m3u8 como fallback
+      // Útil cuando hay múltiples streams y los logs pueden mezclarse
+      const checkInterval = setInterval(() => {
+        if (isResolved) {
+          clearInterval(checkInterval);
+          return;
+        }
+
+        // Verificar si el archivo m3u8 ya existe
+        if (fs.existsSync(outputPath)) {
+          clearInterval(checkInterval);
+          if (!isResolved) {
+            isResolved = true;
+            const hlsUrl = `/streams/${streamId}/index.m3u8`;
+            console.log(`[StreamManager] Stream ${streamId} iniciado exitosamente (detectado por verificación periódica): ${hlsUrl}`);
+            resolve(hlsUrl);
+          }
+        }
+      }, 1000); // Verificar cada segundo
+
+      // Timeout de seguridad - si no se resuelve en 30 segundos, rechazar
+      // Aumentado a 30s para permitir múltiples streams simultáneos
       setTimeout(() => {
+        clearInterval(checkInterval);
         if (!isResolved) {
           isResolved = true;
-          reject(new Error('Timeout al iniciar stream - verifica la URL RTSP'));
+          reject(new Error('Timeout al iniciar stream - verifica la URL RTSP y que FFmpeg tenga recursos suficientes'));
         }
-      }, 10000);
+      }, 30000);
     });
   }
 
