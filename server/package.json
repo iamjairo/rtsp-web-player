@@ -8,12 +8,20 @@
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["rtsp", "hls", "streaming", "ffmpeg"],
+  "keywords": [
+    "rtsp",
+    "hls",
+    "streaming",
+    "ffmpeg"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "fluent-ffmpeg": "^2.1.2"
+    "express": "^4.18.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "node-nmap": "^4.0.0",
+    "node-onvif": "^0.1.7",
+    "tp-link-tapo-connect": "^2.0.8"
   }
 }

@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { Camera } from './types';
 import { VideoPlayer } from './components/VideoPlayer';
 import { AddCameraForm } from './components/AddCameraForm';
+import CameraDiscovery from './components/CameraDiscovery';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { Video, Grid3x3, Grid2x2, LayoutGrid, Trash2 } from 'lucide-react';
+import { Video, Grid3x3, Grid2x2, LayoutGrid, Trash2, Search } from 'lucide-react';
 
 function App() {
   const [cameras, setCameras] = useLocalStorage<Camera[]>('rtsp-cameras', []);
   const [gridColumns, setGridColumns] = useState(2);
+  const [showDiscovery, setShowDiscovery] = useState(false);
 
   const addCamera = (cameraData: Omit<Camera, 'id'>) => {
     const newCamera: Camera = {
@@ -50,6 +52,16 @@ function App() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Discovery button */}
+              <button
+                onClick={() => setShowDiscovery(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                title="Descubrir cámaras en red local"
+              >
+                <Search className="w-4 h-4" />
+                <span className="hidden sm:inline">Descubrir Cámaras</span>
+              </button>
+
               {/* Grid layout selector */}
               <div className="flex items-center gap-2 bg-slate-700 rounded-lg p-1">
                 <button
@@ -141,6 +153,16 @@ function App() {
 
       {/* Add camera button/form */}
       <AddCameraForm onAdd={addCamera} />
+
+      {/* Camera Discovery Modal */}
+      {showDiscovery && (
+        <CameraDiscovery
+          onAddCamera={(camera) => {
+            setCameras([...cameras, camera]);
+          }}
+          onClose={() => setShowDiscovery(false)}
+        />
+      )}
 
       {/* Footer */}
       <footer className="mt-12 py-6 bg-slate-800 border-t border-slate-700">

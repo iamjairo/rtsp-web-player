@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import streamManager from './streamManager.js';
+import cameraDiscovery from './cameraDiscovery.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -159,6 +160,171 @@ app.get('/api/streams/:id', (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════
+// 📡 CAMERA DISCOVERY ENDPOINTS
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * POST /api/discovery/start
+ * Inicia el descubrimiento de cámaras en la red local
+ * Body: { tapoEmail?: string, tapoPassword?: string, scanRtsp?: boolean }
+ */
+app.post('/api/discovery/start', async (req, res) => {
+  try {
+    const { tapoEmail, tapoPassword, scanRtsp = true } = req.body;
+
+    console.log('[API] Iniciando descubrimiento de cámaras...');
+
+    // Iniciar descubrimiento de forma asíncrona
+    cameraDiscovery.startDiscovery({
+      tapoEmail,
+      tapoPassword,
+      scanRtsp
+    }).catch(error => {
+      console.error('[API] Error en descubrimiento:', error);
+    });
+
+    res.json({
+      success: true,
+      message: 'Descubrimiento iniciado',
+      status: cameraDiscovery.getDiscoveryStatus()
+    });
+  } catch (error) {
+    console.error('[API] Error al iniciar descubrimiento:', error);
+    res.status(500).json({
+      error: 'Error al iniciar descubrimiento',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/discovery/status
+ * Obtiene el estado actual del descubrimiento
+ */
+app.get('/api/discovery/status', (req, res) => {
+  try {
+    const status = cameraDiscovery.getDiscoveryStatus();
+
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    console.error('[API] Error al obtener estado:', error);
+    res.status(500).json({
+      error: 'Error al obtener estado',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/discovery/devices
+ * Obtiene la lista de dispositivos descubiertos
+ */
+app.get('/api/discovery/devices', (req, res) => {
+  try {
+    const devices = cameraDiscovery.getDiscoveredDevices();
+
+    res.json({
+      success: true,
+      count: devices.length,
+      devices
+    });
+  } catch (error) {
+    console.error('[API] Error al obtener dispositivos:', error);
+    res.status(500).json({
+      error: 'Error al obtener dispositivos',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/discovery/test
+ * Prueba la conexión a una cámara con credenciales
+ * Body: { camera: object, credentials: { username, password } }
+ */
+app.post('/api/discovery/test', async (req, res) => {
+  try {
+    const { camera, credentials } = req.body;
+
+    if (!camera) {
+      return res.status(400).json({
+        error: 'Se requiere el objeto camera'
+      });
+    }
+
+    console.log(`[API] Probando conexión a cámara ${camera.name || camera.id}`);
+
+    const result = await cameraDiscovery.testCameraConnection(camera, credentials);
+
+    res.json({
+      success: result.success,
+      ...result
+    });
+  } catch (error) {
+    console.error('[API] Error al probar conexión:', error);
+    res.status(500).json({
+      error: 'Error al probar conexión',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/discovery/rtsp-urls
+ * Genera URLs RTSP sugeridas para una cámara
+ * Body: { camera: object, credentials?: { username, password } }
+ */
+app.post('/api/discovery/rtsp-urls', (req, res) => {
+  try {
+    const { camera, credentials = {} } = req.body;
+
+    if (!camera) {
+      return res.status(400).json({
+        error: 'Se requiere el objeto camera'
+      });
+    }
+
+    const urls = cameraDiscovery.generateRtspUrls(camera, credentials);
+
+    res.json({
+      success: true,
+      camera: camera.name || camera.id,
+      urls
+    });
+  } catch (error) {
+    console.error('[API] Error al generar URLs:', error);
+    res.status(500).json({
+      error: 'Error al generar URLs',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/discovery/clear
+ * Limpia los dispositivos descubiertos
+ */
+app.delete('/api/discovery/clear', (req, res) => {
+  try {
+    cameraDiscovery.clearDiscoveredDevices();
+
+    res.json({
+      success: true,
+      message: 'Dispositivos descubiertos eliminados'
+    });
+  } catch (error) {
+    console.error('[API] Error al limpiar dispositivos:', error);
+    res.status(500).json({
+      error: 'Error al limpiar dispositivos',
+      message: error.message
+    });
+  }
+});
+
 // Manejo de shutdown graceful
 process.on('SIGTERM', async () => {
   console.log('\n[Server] SIGTERM recibido, cerrando servidor...');
@@ -180,19 +346,25 @@ app.listen(PORT, () => {
   console.log('');
   console.log(`✅ Servidor corriendo en: http://localhost:${PORT}`);
   console.log('');
-  console.log('📡 Endpoints disponibles:');
+  console.log('📡 Endpoints - Streams:');
   console.log(`   GET    /api/health          - Health check`);
   console.log(`   GET    /api/streams         - Listar streams activos`);
   console.log(`   POST   /api/streams         - Iniciar nuevo stream`);
   console.log(`   GET    /api/streams/:id     - Info de stream específico`);
   console.log(`   DELETE /api/streams/:id     - Detener stream`);
   console.log('');
+  console.log('🔍 Endpoints - Camera Discovery:');
+  console.log(`   POST   /api/discovery/start     - Iniciar descubrimiento`);
+  console.log(`   GET    /api/discovery/status    - Estado del descubrimiento`);
+  console.log(`   GET    /api/discovery/devices   - Dispositivos encontrados`);
+  console.log(`   POST   /api/discovery/test      - Probar conexión a cámara`);
+  console.log(`   POST   /api/discovery/rtsp-urls - Generar URLs RTSP`);
+  console.log(`   DELETE /api/discovery/clear     - Limpiar dispositivos`);
+  console.log('');
   console.log('🎬 Directorio de streams: ./server/streams/');
   console.log('');
   console.log('💡 Ejemplo de uso:');
-  console.log('   curl -X POST http://localhost:3001/api/streams \\');
-  console.log('        -H "Content-Type: application/json" \\');
-  console.log('        -d \'{"id":"cam1","rtspUrl":"rtsp://..."}\'');
+  console.log('   curl -X POST http://localhost:3001/api/discovery/start');
   console.log('');
   console.log('⌨️  Presiona Ctrl+C para detener el servidor');
   console.log('════════════════════════════════════════════════════════');
