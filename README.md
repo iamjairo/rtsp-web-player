@@ -10,6 +10,7 @@ Una aplicación web moderna para reproducir múltiples streams RTSP simultáneam
 ## Características
 
 - ✅ **Conversión RTSP integrada** - Backend Node.js con FFmpeg para convertir RTSP a HLS en runtime
+- ✅ **Descubrimiento automático de cámaras** - Detecta cámaras ONVIF, Tapo y Yi Cams en tu red local
 - ✅ Reproduce múltiples cámaras simultáneamente
 - ✅ Soporte para HLS, MJPEG y WebRTC
 - ✅ Almacenamiento automático en localStorage
@@ -17,7 +18,7 @@ Una aplicación web moderna para reproducir múltiples streams RTSP simultáneam
 - ✅ Interfaz moderna y oscura con Tailwind CSS
 - ✅ Agregar/eliminar cámaras fácilmente
 - ✅ TypeScript para mayor seguridad de tipos
-- ✅ API REST para gestión de streams
+- ✅ API REST para gestión de streams y descubrimiento
 
 ## Instalación
 
@@ -71,7 +72,20 @@ Ahora abre tu navegador en `http://localhost:5173`
 
 ## Uso
 
-1. **Iniciar la aplicación**: Ejecuta `npm run dev` o `bun run dev`
+### Método 1: Descubrimiento Automático (Nuevo)
+
+1. **Iniciar la aplicación**: Ejecuta `npm run dev` y `npm run server`
+2. **Descubrir cámaras**: Haz clic en el botón "Descubrir Cámaras" en el header
+3. **Iniciar búsqueda**: Haz clic en "Iniciar Descubrimiento"
+4. **Seleccionar cámara**: Elige una de las cámaras encontradas
+5. **Autenticar**: Ingresa usuario y contraseña de la cámara
+6. **Conectar**: La cámara se agregará automáticamente
+
+Ver [CAMERA_DISCOVERY.md](CAMERA_DISCOVERY.md) para más detalles sobre el descubrimiento automático.
+
+### Método 2: Manual
+
+1. **Iniciar la aplicación**: Ejecuta `npm run dev` y `npm run server`
 2. **Agregar cámara**: Haz clic en el botón `+` flotante
 3. **Configurar cámara**:
    - Nombre: Un nombre descriptivo para tu cámara
@@ -239,7 +253,8 @@ rtsp-web-player/
 ├── src/                           # Frontend (React + TypeScript)
 │   ├── components/
 │   │   ├── VideoPlayer.tsx       # Componente de reproductor individual
-│   │   └── AddCameraForm.tsx     # Formulario para agregar cámaras
+│   │   ├── AddCameraForm.tsx     # Formulario para agregar cámaras
+│   │   └── CameraDiscovery.tsx   # Componente de descubrimiento
 │   ├── hooks/
 │   │   └── useLocalStorage.ts    # Hook para persistencia
 │   ├── types.ts                  # Tipos TypeScript
@@ -248,8 +263,10 @@ rtsp-web-player/
 ├── server/                        # Backend (Node.js + Express)
 │   ├── index.js                  # Servidor Express + API REST
 │   ├── streamManager.js          # Gestor de conversión RTSP → HLS
+│   ├── cameraDiscovery.js        # Módulo de descubrimiento de cámaras
 │   ├── streams/                  # Archivos HLS generados (auto-creado)
 │   └── package.json              # Dependencias del backend
+├── CAMERA_DISCOVERY.md            # Documentación de descubrimiento
 ├── package.json                   # Dependencias del frontend
 ├── tsconfig.json
 └── tailwind.config.js
@@ -289,6 +306,8 @@ npm run lint               # Ejecuta ESLint
 - **Express** - Framework web minimalista
 - **FFmpeg** - Conversión de video RTSP → HLS
 - **fluent-ffmpeg** - Wrapper de FFmpeg para Node.js
+- **node-onvif** - Descubrimiento y control de cámaras ONVIF
+- **tp-link-tapo-connect** - API para dispositivos Tapo
 - **CORS** - Manejo de CORS para API REST
 
 ## Solución de Problemas
@@ -354,6 +373,9 @@ app.use((req, res, next) => {
 
 - [x] Backend integrado para conversión RTSP → HLS
 - [x] API REST para gestión de streams
+- [x] Descubrimiento automático de cámaras ONVIF
+- [x] Soporte para cámaras Tapo (TP-Link)
+- [ ] Descubrimiento completo de Yi Cams (Xiaomi)
 - [ ] Detener streams automáticamente cuando se elimina la cámara
 - [ ] Interfaz de administración de streams activos
 - [ ] Soporte para WebRTC nativo (baja latencia)

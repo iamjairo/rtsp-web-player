@@ -15,8 +15,11 @@
   "dependencies": {
     "hls.js": "^1.6.14",
     "lucide-react": "^0.553.0",
+    "node-nmap": "^4.0.0",
+    "node-onvif": "^0.1.7",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "tp-link-tapo-connect": "^2.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
