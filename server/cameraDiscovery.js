@@ -292,83 +292,81 @@ class CameraDiscovery {
    * Prueba conexión ONVIF
    */
   async testOnvifConnection(camera, credentials) {
-    return new Promise((resolve) => {
+    try {
       const { username, password } = credentials;
 
       if (!username || !password) {
-        resolve({
+        return {
           success: false,
           error: 'Username and password required for ONVIF cameras'
-        });
-        return;
+        };
       }
 
+      // Crear dispositivo ONVIF
       const device = new onvif.OnvifDevice({
         xaddr: camera.onvifAddress,
         user: username,
         pass: password
       });
 
-      device.init().then(() => {
-        // Obtener información del dispositivo
-        const deviceInfo = device.getInformation();
+      // Inicializar el dispositivo
+      await device.init();
 
-        // Obtener perfiles de streaming
-        device.getProfiles().then((profiles) => {
-          const streamUris = [];
+      // Obtener información del dispositivo
+      const deviceInfo = {
+        manufacturer: device.information?.manufacturer || 'Unknown',
+        model: device.information?.model || 'Unknown',
+        firmwareVersion: device.information?.firmwareVersion || 'Unknown',
+        serialNumber: device.information?.serialNumber || 'Unknown',
+        hardwareId: device.information?.hardwareId || 'Unknown'
+      };
 
-          // Obtener URI de stream para cada perfil
-          profiles.forEach((profile, index) => {
-            device.getStreamUri(profile.token).then((uri) => {
-              streamUris.push({
-                profile: profile.name,
-                uri: uri.uri,
-                resolution: profile.videoEncoderConfiguration?.resolution || {}
-              });
+      // Intentar obtener perfiles de streaming
+      let profiles = [];
+      try {
+        // node-onvif usa una estructura diferente para los perfiles
+        if (device.services && device.services.media) {
+          const mediaService = device.services.media;
 
-              // Cuando tengamos todos los URIs, resolver
-              if (streamUris.length === profiles.length) {
-                resolve({
-                  success: true,
-                  deviceInfo,
-                  profiles: streamUris,
-                  capabilities: device.getCurrentProfile()
-                });
-              }
-            }).catch((error) => {
-              console.error('[Discovery] Error getting stream URI:', error);
-              if (streamUris.length === profiles.length - 1) {
-                resolve({
-                  success: true,
-                  deviceInfo,
-                  profiles: streamUris
-                });
-              }
-            });
-          });
+          // Obtener perfiles de video
+          if (mediaService.profiles) {
+            profiles = mediaService.profiles.map((profile, index) => {
+              // Construir URL RTSP manualmente basándose en el perfil
+              const rtspUrl = `rtsp://${username}:${password}@${camera.ip}:554/`;
 
-          // Si no hay perfiles, igual resolver con éxito
-          if (profiles.length === 0) {
-            resolve({
-              success: true,
-              deviceInfo,
-              profiles: [],
-              message: 'No streaming profiles found'
+              return {
+                name: profile.name || `Profile ${index + 1}`,
+                token: profile.token,
+                uri: rtspUrl,
+                videoEncoder: profile.videoEncoderConfiguration?.name || 'Unknown',
+                resolution: profile.videoEncoderConfiguration?.resolution || { width: 1920, height: 1080 }
+              };
             });
           }
-        }).catch((error) => {
-          resolve({
-            success: false,
-            error: `Failed to get profiles: ${error.message}`
-          });
-        });
-      }).catch((error) => {
-        resolve({
-          success: false,
-          error: `Authentication failed: ${error.message}`
-        });
-      });
-    });
+        }
+      } catch (profileError) {
+        console.error('[Discovery] Error getting profiles:', profileError);
+        // Continuar incluso si no podemos obtener perfiles
+      }
+
+      // Si no pudimos obtener perfiles, devolver éxito con info básica
+      return {
+        success: true,
+        deviceInfo,
+        profiles: profiles.length > 0 ? profiles : [],
+        message: profiles.length > 0
+          ? `Connected successfully. Found ${profiles.length} profile(s)`
+          : 'Connected successfully. Unable to retrieve profiles, but device is reachable.',
+        hasProfiles: profiles.length > 0
+      };
+
+    } catch (error) {
+      console.error('[Discovery] ONVIF connection test failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to connect to ONVIF camera'
+      };
+    }
   }
 
   /**
@@ -413,18 +411,36 @@ class CameraDiscovery {
 
     if (camera.type === 'onvif' && camera.ip) {
       // URLs RTSP comunes para cámaras ONVIF
-      camera.rtspPorts.forEach(port => {
+      const ports = camera.rtspPorts && camera.rtspPorts.length > 0 ? camera.rtspPorts : [554];
+
+      ports.forEach(port => {
+        // URLs genéricas más comunes primero
         urls.push(`rtsp://${auth}${camera.ip}:${port}/`);
         urls.push(`rtsp://${auth}${camera.ip}:${port}/stream1`);
         urls.push(`rtsp://${auth}${camera.ip}:${port}/stream2`);
+
+        // URLs específicas por fabricante
         urls.push(`rtsp://${auth}${camera.ip}:${port}/live/main`);
         urls.push(`rtsp://${auth}${camera.ip}:${port}/live/sub`);
-        urls.push(`rtsp://${auth}${camera.ip}:${port}/Streaming/Channels/101`);
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/Streaming/Channels/101`); // HikVision
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/Streaming/Channels/102`); // HikVision substream
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/cam/realmonitor?channel=1&subtype=0`); // Dahua
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/live.sdp`); // Axis
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/onvif1`); // Generic ONVIF
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/onvif2`); // Generic ONVIF
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/h264`); // Generic H264
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/video1`); // Generic
+        urls.push(`rtsp://${auth}${camera.ip}:${port}/11`); // Algunos modelos
       });
     } else if (camera.type === 'tapo' && camera.ip) {
       // URL RTSP para cámaras Tapo
       urls.push(`rtsp://${auth}${camera.ip}:554/stream1`);
       urls.push(`rtsp://${auth}${camera.ip}:554/stream2`);
+    } else if (camera.type === 'yi' && camera.ip) {
+      // URL RTSP para cámaras Yi
+      urls.push(`rtsp://${auth}${camera.ip}:554/`);
+      urls.push(`rtsp://${auth}${camera.ip}:554/ch0_0.h264`);
+      urls.push(`rtsp://${auth}${camera.ip}:554/ch0_1.h264`);
     }
 
     return urls;

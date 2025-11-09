@@ -399,24 +399,53 @@ export default function CameraDiscovery({ onAddCamera, onClose }: CameraDiscover
                       <div className="bg-green-900 bg-opacity-30 border border-green-600 rounded-lg p-4">
                         <div className="flex items-center gap-3 mb-4">
                           <CheckCircle className="w-6 h-6 text-green-400" />
-                          <span className="text-green-100 font-semibold">Conexión Exitosa</span>
+                          <div className="flex-1">
+                            <span className="text-green-100 font-semibold block">Conexión Exitosa</span>
+                            {connectionResult.message && (
+                              <span className="text-green-200 text-sm">{connectionResult.message}</span>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Device Info */}
+                        {connectionResult.deviceInfo && (
+                          <div className="mb-4 p-3 bg-gray-800 rounded text-sm">
+                            <h6 className="text-white font-semibold mb-2">Información del Dispositivo:</h6>
+                            <div className="text-gray-300 space-y-1">
+                              {connectionResult.deviceInfo.manufacturer && (
+                                <p>Fabricante: {connectionResult.deviceInfo.manufacturer}</p>
+                              )}
+                              {connectionResult.deviceInfo.model && (
+                                <p>Modelo: {connectionResult.deviceInfo.model}</p>
+                              )}
+                              {connectionResult.deviceInfo.firmwareVersion && (
+                                <p>Firmware: {connectionResult.deviceInfo.firmwareVersion}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {connectionResult.suggestedUrls && connectionResult.suggestedUrls.length > 0 && (
                           <div>
-                            <h5 className="text-white font-semibold mb-3">URLs RTSP Disponibles:</h5>
-                            <div className="space-y-2">
-                              {connectionResult.suggestedUrls.slice(0, 3).map((url: string, index: number) => (
+                            <h5 className="text-white font-semibold mb-3">
+                              URLs RTSP Sugeridas (Haz clic para agregar):
+                            </h5>
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                              {connectionResult.suggestedUrls.slice(0, 10).map((url: string, index: number) => (
                                 <button
                                   key={index}
                                   onClick={() => addCameraFromDevice(selectedDevice, url)}
                                   className="w-full text-left px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm text-white font-mono flex items-center justify-between group"
+                                  title="Haz clic para agregar esta cámara con esta URL"
                                 >
-                                  <span className="truncate">{url}</span>
-                                  <Plus className="w-4 h-4 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <span className="truncate flex-1">{url}</span>
+                                  <Plus className="w-4 h-4 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2 flex-shrink-0" />
                                 </button>
                               ))}
                             </div>
+                            <p className="text-gray-400 text-xs mt-3">
+                              Nota: Algunas URLs pueden no funcionar. Prueba diferentes opciones si una no funciona.
+                            </p>
                           </div>
                         )}
                       </div>
@@ -426,6 +455,9 @@ export default function CameraDiscovery({ onAddCamera, onClose }: CameraDiscover
                         <div>
                           <span className="text-red-100 font-semibold block">Error de Conexión</span>
                           <span className="text-red-200 text-sm">{connectionResult.error}</span>
+                          <p className="text-red-200 text-xs mt-2">
+                            Verifica que el usuario y contraseña sean correctos y que la cámara sea accesible.
+                          </p>
                         </div>
                       </div>
                     )}
