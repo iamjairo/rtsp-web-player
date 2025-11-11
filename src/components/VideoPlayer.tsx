@@ -26,6 +26,28 @@ export function VideoPlayer({ camera, onRemove }: VideoPlayerProps) {
         const hls = new Hls({
           enableWorker: true,
           lowLatencyMode: true,
+          // Configuración optimizada para estabilidad
+          maxBufferLength: 30, // Buffer máximo de 30 segundos
+          maxMaxBufferLength: 60, // Buffer máximo absoluto
+          backBufferLength: 10, // Mantener 10s de buffer anterior
+          maxBufferSize: 60 * 1000 * 1000, // 60 MB
+          maxBufferHole: 0.5, // Tolerancia de huecos en el buffer
+          highBufferWatchdogPeriod: 3, // Monitoreo de buffer alto
+          // Configuración de recuperación de errores
+          fragLoadingTimeOut: 20000, // Timeout de 20s para cargar fragmentos
+          manifestLoadingTimeOut: 10000, // Timeout de 10s para manifest
+          levelLoadingTimeOut: 10000, // Timeout de 10s para niveles
+          // Reintentos automáticos
+          fragLoadingMaxRetry: 6, // 6 reintentos para fragmentos
+          levelLoadingMaxRetry: 4, // 4 reintentos para niveles
+          manifestLoadingMaxRetry: 6, // 6 reintentos para manifest
+          // Optimización de inicio
+          startPosition: -1, // Comenzar desde el final (live edge)
+          liveSyncDuration: 3, // Sincronización a 3s del final
+          liveMaxLatencyDuration: 10, // Latencia máxima de 10s
+          // ABR (Adaptive Bitrate)
+          abrEwmaFastLive: 3,
+          abrEwmaSlowLive: 9,
         });
 
         hls.loadSource(camera.url);
@@ -40,9 +62,25 @@ export function VideoPlayer({ camera, onRemove }: VideoPlayerProps) {
         });
 
         hls.on(Hls.Events.ERROR, (_, data) => {
+          console.error('HLS Error:', data);
+
           if (data.fatal) {
-            setError('Error al cargar el stream');
-            setIsLoading(false);
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.log('Network error, attempting recovery...');
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.log('Media error, attempting recovery...');
+                hls.recoverMediaError();
+                break;
+              default:
+                console.error('Fatal error, cannot recover');
+                setError('Error al cargar el stream');
+                setIsLoading(false);
+                hls.destroy();
+                break;
+            }
           }
         });
 

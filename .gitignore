@@ -16,6 +16,9 @@ dist-ssr
 server/node_modules
 server/streams
 
+# Electron builds
+release/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
