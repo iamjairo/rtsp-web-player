@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { Camera } from '../types';
 import { Plus, X, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface AddCameraFormProps {
   onAdd: (camera: Omit<Camera, 'id'>) => void;
 }
 
-const BACKEND_URL = 'http://localhost:3001';
+const BACKEND_URL = API_BASE_URL;
 
 export function AddCameraForm({ onAdd }: AddCameraFormProps) {
   const [isOpen, setIsOpen] = useState(false);

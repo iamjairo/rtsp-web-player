@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Wifi, Camera as CameraIcon, CheckCircle, AlertCircle, Loader2, Lock, Plus, X } from 'lucide-react';
 import type { DiscoveredCamera, DiscoveryStatus, CameraCredentials, Camera } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface CameraDiscoveryProps {
   onAddCamera: (camera: Camera) => void;
@@ -27,7 +28,7 @@ export default function CameraDiscovery({ onAddCamera, onClose }: CameraDiscover
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionResult, setConnectionResult] = useState<any>(null);
 
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = `${API_BASE_URL}/api`;
 
   // Polling del estado del descubrimiento
   useEffect(() => {
