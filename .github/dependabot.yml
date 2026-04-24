@@ -1,0 +1,85 @@
+version: 2
+updates:
+  # Python dependencies - Look in the root for requirements.txt or pyproject.toml
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(python)"
+    groups:
+      python-all:
+        patterns:
+          - "*"
+
+  # npm dependencies - Look in the root for package.json
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "deps(npm)"
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "react-icons"
+          - "@testing-library/*"
+        update-types:
+          - "minor"
+          - "patch"
+      npm-misc:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "react"
+          - "react-dom"
+          - "react-icons"
+          - "@testing-library/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions - All actions in one PR
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "deps(actions)"
+    groups:
+      github-actions-all:
+        patterns:
+          - "*"
+
+  # Docker dependencies - Root check
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"
+    groups:
+      docker-all:
+        patterns:
+          - "*"
