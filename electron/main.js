@@ -2,10 +2,39 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const _require = createRequire(import.meta.url);
+
+/**
+ * Resolve the FFmpeg binary path.
+ * In a packaged Electron build, ffmpeg-static lives in the server extraResources.
+ * In development it comes from the server/node_modules directory.
+ */
+function resolveFfmpegBin() {
+  // Packaged: extraResources/server/node_modules/ffmpeg-static/ffmpeg[.exe]
+  const resourcesServer = path.join(process.resourcesPath || '', 'server');
+  const packedBin = path.join(resourcesServer, 'node_modules', 'ffmpeg-static',
+    process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+  if (fs.existsSync(packedBin)) {
+    return packedBin;
+  }
+  // Development: server/node_modules/ffmpeg-static
+  try {
+    const devBin = _require(
+      path.join(__dirname, '../server/node_modules/ffmpeg-static')
+    );
+    if (devBin && fs.existsSync(devBin)) return devBin;
+  } catch {
+    // not installed
+  }
+  // System ffmpeg fallback
+  return null;
+}
 
 let mainWindow;
 let backendProcess;
@@ -66,15 +95,27 @@ function startBackend() {
       return;
     }
 
+    const ffmpegBin = resolveFfmpegBin();
+    const childEnv = { ...process.env, PORT: BACKEND_PORT.toString() };
+    if (ffmpegBin) {
+      childEnv.FFMPEG_PATH = ffmpegBin;
+      console.log(`Using bundled FFmpeg: ${ffmpegBin}`);
+    }
+
     backendProcess = spawn('node', [serverPath], {
       cwd: path.join(__dirname, '../server'),
-      env: { ...process.env, PORT: BACKEND_PORT.toString() },
+      env: childEnv,
       stdio: 'pipe'
     });
 
     backendProcess.stdout.on('data', (data) => {
       console.log(`[Backend] ${data.toString().trim()}`);
-      if (data.toString().includes(`Server running on port ${BACKEND_PORT}`)) {
+      // Match both the Spanish log ("Servidor corriendo en") and a generic port check
+      if (
+        data.toString().includes('Servidor corriendo en') ||
+        data.toString().includes(`Server running on port ${BACKEND_PORT}`) ||
+        data.toString().includes(`:${BACKEND_PORT}`)
+      ) {
         console.log('Backend server started successfully');
         resolve();
       }

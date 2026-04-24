@@ -1,11 +1,34 @@
-import ffmpeg from 'fluent-ffmpeg';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Resolve the FFmpeg binary path. Prefer:
+//  1. FFMPEG_PATH env var (set by Electron main process pointing at a bundled binary)
+//  2. ffmpeg-static bundled binary (installed as a server dependency)
+//  3. System-wide 'ffmpeg' on $PATH (Docker / manual installs)
+function resolveFfmpegPath() {
+  if (process.env.FFMPEG_PATH) {
+    return process.env.FFMPEG_PATH;
+  }
+  try {
+    const require = createRequire(import.meta.url);
+    const ffmpegStatic = require('ffmpeg-static');
+    if (ffmpegStatic && fs.existsSync(ffmpegStatic)) {
+      return ffmpegStatic;
+    }
+  } catch {
+    // ffmpeg-static not installed — fall through to system ffmpeg
+  }
+  return 'ffmpeg';
+}
+
+const FFMPEG_BIN = resolveFfmpegPath();
+console.log(`[StreamManager] Using FFmpeg binary: ${FFMPEG_BIN}`);
 
 class StreamManager {
   constructor() {
@@ -45,7 +68,7 @@ class StreamManager {
       console.log(`[StreamManager] Output: ${outputPath}`);
 
       // Usar spawn directamente para tener más control
-      const ffmpegProcess = spawn('ffmpeg', [
+      const ffmpegProcess = spawn(FFMPEG_BIN, [
         '-rtsp_transport', 'tcp',
         '-i', rtspUrl,
         '-c:v', 'copy',           // Copiar codec de video (sin recodificar)
