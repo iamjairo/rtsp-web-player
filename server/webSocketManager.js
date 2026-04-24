@@ -17,7 +17,7 @@
  * Clients connect to:  ws://host:3001/api/ws-streams/<id>/live
  */
 
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
@@ -160,7 +160,7 @@ class WebSocketStreamManager {
 
         // Broadcast to all connected clients.
         clients.forEach((ws) => {
-          if (ws.readyState === ws.OPEN) {
+          if (ws.readyState === WebSocket.OPEN) {
             ws.send(chunk, { binary: true });
           }
         });
@@ -173,7 +173,7 @@ class WebSocketStreamManager {
 
       proc.stderr.on('data', (data) => {
         const msg = data.toString().trim();
-        if (msg) console.log(`[FFmpeg WS ${streamId}] ${msg}`);
+        if (msg) console.log('[FFmpeg WS %s]', streamId, msg);
       });
 
       proc.on('error', (err) => {

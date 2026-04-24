@@ -253,6 +253,8 @@ export function VideoPlayer({ camera, onRemove }: VideoPlayerProps) {
     ws = new WebSocket(camera.url);
     ws.binaryType = 'arraybuffer';
 
+    let started = false;  // local flag inside the effect closure
+
     ws.onopen = () => {
       console.log(`[VideoPlayer] WS connected: ${camera.url}`);
     };
@@ -261,7 +263,8 @@ export function VideoPlayer({ camera, onRemove }: VideoPlayerProps) {
       queue.push(event.data);
       appendNext();
 
-      if (isLoading) {
+      if (!started) {
+        started = true;
         video
           .play()
           .then(() => setIsLoading(false))
@@ -295,7 +298,6 @@ export function VideoPlayer({ camera, onRemove }: VideoPlayerProps) {
         video.src = '';
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camera.url, camera.type]);
 
   // ── Generic / direct video URL ────────────────────────────────────────────────

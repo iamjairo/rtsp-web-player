@@ -110,11 +110,11 @@ function startBackend() {
 
     backendProcess.stdout.on('data', (data) => {
       console.log(`[Backend] ${data.toString().trim()}`);
-      // Match both the Spanish log ("Servidor corriendo en") and a generic port check
+      // Match the server's startup log lines (either Spanish or English variants).
+      // Use specific phrases to avoid false positives from unrelated log output.
       if (
-        data.toString().includes('Servidor corriendo en') ||
-        data.toString().includes(`Server running on port ${BACKEND_PORT}`) ||
-        data.toString().includes(`:${BACKEND_PORT}`)
+        data.toString().includes(`Servidor corriendo en: http://localhost:${BACKEND_PORT}`) ||
+        data.toString().includes(`Server running on port ${BACKEND_PORT}`)
       ) {
         console.log('Backend server started successfully');
         resolve();

@@ -13,6 +13,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 const STATIC_PORT = process.env.STATIC_PORT || null;
+// HOST is used to build self-referencing URLs returned in API responses.
+// Override with your server's public IP or hostname when running remotely.
+const HOST = process.env.HOST || 'localhost';
 
 // Middleware
 app.use(cors());
@@ -86,7 +89,7 @@ app.post('/api/streams', async (req, res) => {
       stream: {
         id,
         rtspUrl,
-        hlsUrl: `http://localhost:${PORT}${hlsUrl}`,
+        hlsUrl: `http://${HOST}:${PORT}${hlsUrl}`,
         status: 'active'
       }
     });
@@ -143,7 +146,7 @@ app.get('/api/streams', (req, res) => {
       count: streams.length,
       streams: streams.map(stream => ({
         ...stream,
-        hlsUrl: `http://localhost:${PORT}${stream.hlsUrl}`
+        hlsUrl: `http://${HOST}:${PORT}${stream.hlsUrl}`
       }))
     });
   } catch (error) {
@@ -176,7 +179,7 @@ app.get('/api/streams/:id', (req, res) => {
       success: true,
       stream: {
         ...stream,
-        hlsUrl: `http://localhost:${PORT}${stream.hlsUrl}`
+        hlsUrl: `http://${HOST}:${PORT}${stream.hlsUrl}`
       }
     });
   } catch (error) {
@@ -218,7 +221,7 @@ app.post('/api/ws-streams', async (req, res) => {
       stream: {
         id,
         rtspUrl,
-        wsUrl: `ws://localhost:${PORT}${wsPath}`,
+        wsUrl: `ws://${HOST}:${PORT}${wsPath}`,
         wsPath,
         mimeType,
         status: 'active',
@@ -242,7 +245,7 @@ app.get('/api/ws-streams', (req, res) => {
       count: streams.length,
       streams: streams.map((s) => ({
         ...s,
-        wsUrl: `ws://localhost:${PORT}${s.wsPath}`,
+        wsUrl: `ws://${HOST}:${PORT}${s.wsPath}`,
       })),
     });
   } catch (error) {
@@ -262,7 +265,7 @@ app.get('/api/ws-streams/:id', (req, res) => {
       return res.status(404).json({ error: 'WS stream no encontrado o no está activo' });
     }
     const stream = webSocketManager.getActiveStreams().find((s) => s.id === id);
-    res.json({ success: true, stream: { ...stream, wsUrl: `ws://localhost:${PORT}${stream.wsPath}` } });
+    res.json({ success: true, stream: { ...stream, wsUrl: `ws://${HOST}:${PORT}${stream.wsPath}` } });
   } catch (error) {
     console.error('[API] Error al obtener WS stream:', error);
     res.status(500).json({ error: 'Error al obtener WS stream', message: error.message });
@@ -479,7 +482,7 @@ httpServer.listen(PORT, () => {
   console.log('║    🎥 RTSP Web Player - Backend Server                ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   console.log('');
-  console.log(`✅ Servidor corriendo en: http://localhost:${PORT}`);
+  console.log(`✅ Servidor corriendo en: http://${HOST}:${PORT}`);
   console.log('');
   console.log('📡 Endpoints - HLS Streams:');
   console.log(`   GET    /api/health          - Health check`);

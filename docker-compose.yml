@@ -19,6 +19,9 @@ services:
       - PORT=3001
       # Static frontend port (inside the container)
       - STATIC_PORT=80
+      # Hostname used to build self-referencing API URLs (stream URLs returned by the backend).
+      # Change to the server's public IP or hostname when running remotely.
+      - HOST=localhost
       # Frontend points to the backend. If running on a remote host, change
       # "localhost" to the host's IP or domain name.
       - VITE_API_URL=http://localhost:3001

@@ -47,7 +47,7 @@ FFmpeg, and also supports native WebRTC/WHEP sources and MJPEG streams.
 ## 📦 Download (Desktop App)
 
 Pre-built desktop installers are attached to every
-[GitHub Release](../../releases/latest).
+[GitHub Release](releases/latest).
 
 | Platform | File | Notes |
 |---|---|---|
