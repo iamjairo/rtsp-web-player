@@ -30,7 +30,13 @@ class StreamManager {
       await this.stopStream(streamId);
     }
 
-    const streamDir = path.join(this.streamsDir, streamId);
+    const streamDir = path.resolve(this.streamsDir, streamId);
+
+    // Verificar que la ruta permanezca dentro del directorio base de streams
+    const streamsRoot = this.streamsDir.endsWith(path.sep) ? this.streamsDir : this.streamsDir + path.sep;
+    if (!(streamDir === this.streamsDir || streamDir.startsWith(streamsRoot))) {
+      throw new Error('ID de stream inválido');
+    }
 
     // Crear directorio para este stream
     if (!fs.existsSync(streamDir)) {
