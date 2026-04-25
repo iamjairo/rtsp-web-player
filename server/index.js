@@ -87,10 +87,10 @@ app.post('/api/streams', async (req, res) => {
       });
     }
 
-    // Validar ID para evitar path traversal (solo caracteres seguros)
-    if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(id)) {
+    // Validar ID de stream (solo nombre simple seguro, sin rutas)
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
       return res.status(400).json({
-        error: 'El campo id contiene caracteres inválidos'
+        error: 'El campo id contiene caracteres no permitidos'
       });
     }
 
