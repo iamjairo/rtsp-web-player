@@ -1,15 +1,22 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import http from 'http';
 import { fileURLToPath } from 'url';
+import rateLimit from 'express-rate-limit';
 import streamManager from './streamManager.js';
 import cameraDiscovery from './cameraDiscovery.js';
+import webSocketManager from './webSocketManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const STATIC_PORT = process.env.STATIC_PORT || null;
+// HOST is used to build self-referencing URLs returned in API responses.
+// Override with your server's public IP or hostname when running remotely.
+const HOST = process.env.HOST || 'localhost';
 
 // Middleware
 app.use(cors());
@@ -17,6 +24,44 @@ app.use(express.json());
 
 // Servir archivos estáticos de streams HLS
 app.use('/streams', express.static(path.join(__dirname, 'streams')));
+
+// In Docker / production mode: serve the pre-built frontend from public_dist.
+// When STATIC_PORT is set we spin up a second http server on that port instead,
+// so the API and the static files can be reached independently.
+const staticDistPath = path.join(__dirname, 'public_dist');
+import fs from 'fs';
+if (fs.existsSync(staticDistPath)) {
+  if (STATIC_PORT) {
+    const staticApp = express();
+    const staticRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    staticApp.use(staticRateLimiter);
+    staticApp.use(express.static(staticDistPath));
+    staticApp.get('*', (_req, res) =>
+      res.sendFile(path.join(staticDistPath, 'index.html'))
+    );
+    staticApp.listen(Number(STATIC_PORT), () => {
+      console.log(`✅ Static frontend available at: http://localhost:${STATIC_PORT}`);
+    });
+  } else {
+    // Single-port mode: serve frontend under / and API under /api
+    app.use(express.static(staticDistPath));
+    const singlePortFrontendRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.get('*', singlePortFrontendRateLimiter, (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/streams')) return next();
+      res.sendFile(path.join(staticDistPath, 'index.html'));
+    });
+  }
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -52,7 +97,7 @@ app.post('/api/streams', async (req, res) => {
     // Validar formato RTSP URL
     if (!rtspUrl.startsWith('rtsp://')) {
       return res.status(400).json({
-        error: 'La URL debe comenzar con rtsp://'
+        error: 'La URL debe comenzar con rtsp:// o rtsps://'
       });
     }
 
@@ -65,7 +110,7 @@ app.post('/api/streams', async (req, res) => {
       stream: {
         id,
         rtspUrl,
-        hlsUrl: `http://localhost:${PORT}${hlsUrl}`,
+        hlsUrl: `http://${HOST}:${PORT}${hlsUrl}`,
         status: 'active'
       }
     });
@@ -122,7 +167,7 @@ app.get('/api/streams', (req, res) => {
       count: streams.length,
       streams: streams.map(stream => ({
         ...stream,
-        hlsUrl: `http://localhost:${PORT}${stream.hlsUrl}`
+        hlsUrl: `http://${HOST}:${PORT}${stream.hlsUrl}`
       }))
     });
   } catch (error) {
@@ -155,7 +200,7 @@ app.get('/api/streams/:id', (req, res) => {
       success: true,
       stream: {
         ...stream,
-        hlsUrl: `http://localhost:${PORT}${stream.hlsUrl}`
+        hlsUrl: `http://${HOST}:${PORT}${stream.hlsUrl}`
       }
     });
   } catch (error) {
@@ -164,6 +209,105 @@ app.get('/api/streams/:id', (req, res) => {
       error: 'Error al obtener stream',
       message: error.message
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// 🔌 WEBSOCKET STREAMS (low-latency fMP4 over WebSocket)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * POST /api/ws-streams
+ * Start a new low-latency WebSocket stream (RTSP → fMP4 → WebSocket).
+ * Body: { id: string, rtspUrl: string }
+ */
+app.post('/api/ws-streams', async (req, res) => {
+  try {
+    const { id, rtspUrl } = req.body;
+
+    if (!id || !rtspUrl) {
+      return res.status(400).json({ error: 'Se requieren los campos: id y rtspUrl' });
+    }
+
+    if (!rtspUrl.startsWith('rtsp://') && !rtspUrl.startsWith('rtsps://')) {
+      return res.status(400).json({ error: 'La URL debe comenzar con rtsp:// o rtsps://' });
+    }
+
+    console.log(`[API] Iniciando WS stream: ${id}`);
+
+    const { wsPath, mimeType } = await webSocketManager.startStream(id, rtspUrl);
+
+    res.json({
+      success: true,
+      stream: {
+        id,
+        rtspUrl,
+        wsUrl: `ws://${HOST}:${PORT}${wsPath}`,
+        wsPath,
+        mimeType,
+        status: 'active',
+      },
+    });
+  } catch (error) {
+    console.error('[API] Error al iniciar WS stream:', error);
+    res.status(500).json({ error: 'Error al iniciar WS stream', message: error.message });
+  }
+});
+
+/**
+ * GET /api/ws-streams
+ * List active WebSocket streams.
+ */
+app.get('/api/ws-streams', (req, res) => {
+  try {
+    const streams = webSocketManager.getActiveStreams();
+    res.json({
+      success: true,
+      count: streams.length,
+      streams: streams.map((s) => ({
+        ...s,
+        wsUrl: `ws://${HOST}:${PORT}${s.wsPath}`,
+      })),
+    });
+  } catch (error) {
+    console.error('[API] Error al listar WS streams:', error);
+    res.status(500).json({ error: 'Error al listar WS streams', message: error.message });
+  }
+});
+
+/**
+ * GET /api/ws-streams/:id
+ * Get info for a specific WebSocket stream.
+ */
+app.get('/api/ws-streams/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!webSocketManager.isStreamActive(id)) {
+      return res.status(404).json({ error: 'WS stream no encontrado o no está activo' });
+    }
+    const stream = webSocketManager.getActiveStreams().find((s) => s.id === id);
+    res.json({ success: true, stream: { ...stream, wsUrl: `ws://${HOST}:${PORT}${stream.wsPath}` } });
+  } catch (error) {
+    console.error('[API] Error al obtener WS stream:', error);
+    res.status(500).json({ error: 'Error al obtener WS stream', message: error.message });
+  }
+});
+
+/**
+ * DELETE /api/ws-streams/:id
+ * Stop a WebSocket stream.
+ */
+app.delete('/api/ws-streams/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!webSocketManager.isStreamActive(id)) {
+      return res.status(404).json({ error: 'WS stream no encontrado o no está activo' });
+    }
+    await webSocketManager.stopStream(id);
+    res.json({ success: true, message: `WS stream ${id} detenido correctamente` });
+  } catch (error) {
+    console.error('[API] Error al detener WS stream:', error);
+    res.status(500).json({ error: 'Error al detener WS stream', message: error.message });
   }
 });
 
@@ -336,29 +480,44 @@ app.delete('/api/discovery/clear', (req, res) => {
 process.on('SIGTERM', async () => {
   console.log('\n[Server] SIGTERM recibido, cerrando servidor...');
   await streamManager.stopAllStreams();
+  await webSocketManager.stopAllStreams();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('\n[Server] SIGINT recibido, cerrando servidor...');
   await streamManager.stopAllStreams();
+  await webSocketManager.stopAllStreams();
   process.exit(0);
 });
 
+// Crear servidor HTTP explícito para soportar WebSocket upgrades
+const httpServer = http.createServer(app);
+
+// Registrar el handler de upgrades WebSocket
+webSocketManager.attachToHttpServer(httpServer);
+
 // Iniciar servidor
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log('╔════════════════════════════════════════════════════════╗');
   console.log('║    🎥 RTSP Web Player - Backend Server                ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   console.log('');
-  console.log(`✅ Servidor corriendo en: http://localhost:${PORT}`);
+  console.log(`✅ Servidor corriendo en: http://${HOST}:${PORT}`);
   console.log('');
-  console.log('📡 Endpoints - Streams:');
+  console.log('📡 Endpoints - HLS Streams:');
   console.log(`   GET    /api/health          - Health check`);
-  console.log(`   GET    /api/streams         - Listar streams activos`);
-  console.log(`   POST   /api/streams         - Iniciar nuevo stream`);
-  console.log(`   GET    /api/streams/:id     - Info de stream específico`);
-  console.log(`   DELETE /api/streams/:id     - Detener stream`);
+  console.log(`   GET    /api/streams         - Listar streams HLS activos`);
+  console.log(`   POST   /api/streams         - Iniciar nuevo stream HLS`);
+  console.log(`   GET    /api/streams/:id     - Info de stream HLS específico`);
+  console.log(`   DELETE /api/streams/:id     - Detener stream HLS`);
+  console.log('');
+  console.log('🔌 Endpoints - WebSocket Streams (baja latencia):');
+  console.log(`   GET    /api/ws-streams         - Listar WS streams activos`);
+  console.log(`   POST   /api/ws-streams         - Iniciar nuevo WS stream`);
+  console.log(`   GET    /api/ws-streams/:id     - Info de WS stream específico`);
+  console.log(`   DELETE /api/ws-streams/:id     - Detener WS stream`);
+  console.log(`   WS     /api/ws-streams/:id/live - Conectar al stream en vivo`);
   console.log('');
   console.log('🔍 Endpoints - Camera Discovery:');
   console.log(`   POST   /api/discovery/start     - Iniciar descubrimiento`);

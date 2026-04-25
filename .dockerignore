@@ -1,0 +1,39 @@
+# Dependencies installed inside the container
+node_modules
+server/node_modules
+
+# Build artefacts
+dist
+release
+
+# Electron desktop-app files (not needed in Docker)
+electron
+
+# Runtime stream segments
+server/streams
+streams-data
+
+# Source maps and cache
+.cache
+*.map
+
+# Binary blobs committed to the repo
+*.zip
+*.exe
+*.dmg
+*.AppImage
+*.deb
+
+# Version control
+.git
+.github
+
+# Editor / OS
+.DS_Store
+*.swp
+Thumbs.db
+
+# Env files with secrets
+.env
+.env.*
+!.env.example

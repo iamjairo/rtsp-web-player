@@ -2,7 +2,15 @@ export interface Camera {
   id: string;
   name: string;
   url: string;
-  type: 'rtsp' | 'hls' | 'mjpeg' | 'webrtc';
+  /**
+   * Stream type:
+   *  - hls      → HTTP Live Streaming (.m3u8), served by the backend after RTSP→HLS conversion
+   *  - mjpeg    → Motion-JPEG HTTP stream
+   *  - webrtc   → Native WebRTC source (WHEP protocol); `url` is the WHEP HTTP endpoint
+   *  - ws       → Low-latency fragmented MP4 over WebSocket (RTSP→fMP4 conversion by backend)
+   *  - rtsp     → Direct RTSP URL (requires browser plugin or native support; use hls/ws instead)
+   */
+  type: 'rtsp' | 'hls' | 'mjpeg' | 'webrtc' | 'ws';
 }
 
 export interface CameraGridLayout {
@@ -44,11 +52,20 @@ export interface CameraCredentials {
   password: string;
 }
 
+export interface DeviceInfo {
+  manufacturer?: string;
+  model?: string;
+  firmwareVersion?: string;
+  serialNumber?: string;
+  hardwareId?: string;
+}
+
 export interface ConnectionTestResult {
   success: boolean;
   error?: string;
-  deviceInfo?: any;
-  profiles?: any[];
+  deviceInfo?: DeviceInfo;
+  profiles?: Record<string, unknown>[];
   rtspPort?: number;
   message?: string;
+  suggestedUrls?: string[];
 }
