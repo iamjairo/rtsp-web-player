@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Wifi, Camera as CameraIcon, CheckCircle, AlertCircle, Loader2, Lock, Plus, X } from 'lucide-react';
-import type { DiscoveredCamera, DiscoveryStatus, CameraCredentials, Camera } from '../types';
+import type { DiscoveredCamera, DiscoveryStatus, CameraCredentials, Camera, ConnectionTestResult } from '../types';
 import { API_BASE_URL } from '../config';
 
 interface CameraDiscoveryProps {
@@ -26,7 +26,7 @@ export default function CameraDiscovery({ onAddCamera, onClose }: CameraDiscover
     password: ''
   });
   const [testingConnection, setTestingConnection] = useState(false);
-  const [connectionResult, setConnectionResult] = useState<any>(null);
+  const [connectionResult, setConnectionResult] = useState<ConnectionTestResult | null>(null);
 
   const API_BASE = `${API_BASE_URL}/api`;
 
@@ -61,7 +61,7 @@ export default function CameraDiscovery({ onAddCamera, onClose }: CameraDiscover
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [discoveryStatus.inProgress]);
+  }, [discoveryStatus.inProgress, API_BASE]);
 
   const startDiscovery = async () => {
     try {
@@ -151,9 +151,9 @@ export default function CameraDiscovery({ onAddCamera, onClose }: CameraDiscover
       } else {
         throw new Error(data.error || 'Error al agregar cámara');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding camera:', error);
-      alert(`Error al agregar cámara: ${error.message}`);
+      alert(`Error al agregar cámara: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

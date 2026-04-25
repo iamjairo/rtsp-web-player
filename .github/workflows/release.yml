@@ -1,0 +1,128 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Release workflow — builds platform-specific Electron installers and publishes
+# them to a GitHub Release when a semver tag (v*.*.*) is pushed.
+#
+# Triggers:
+#   git tag v1.2.3 && git push origin v1.2.3
+#
+# Artifacts produced:
+#   • Windows  — NSIS installer (.exe) + portable (.exe)
+#   • macOS    — Disk image (.dmg) + zip (.zip)
+#   • Linux    — AppImage (.AppImage) + Debian package (.deb)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write   # needed to create a GitHub Release and upload assets
+
+jobs:
+  # ── Build matrix ────────────────────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_glob: "release/*.exe"
+          - os: macos-latest
+            artifact_glob: "release/*.dmg release/*.zip"
+          - os: ubuntu-latest
+            artifact_glob: "release/*.AppImage release/*.deb"
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Node.js ──────────────────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # ── Install root dependencies (frontend + electron-builder) ──────────────
+      - name: Install root dependencies
+        run: npm ci
+
+      # ── Install backend server dependencies (includes ffmpeg-static) ─────────
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      # ── macOS: code-signing (optional) ───────────────────────────────────────
+      # To enable code-signing, add the following repository secrets:
+      #   CSC_LINK           — base64-encoded .p12 certificate
+      #   CSC_KEY_PASSWORD   — certificate password
+      # Without these secrets the build succeeds but the app will be unsigned.
+      # Users on macOS Gatekeeper will need to right-click → Open to run it.
+
+      # ── Build Electron app ───────────────────────────────────────────────────
+      - name: Build Electron app
+        env:
+          # macOS code signing (optional — leave unset for unsigned builds)
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # Prevent electron-builder from publishing during build step
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run electron:build
+
+      # ── List build output for debugging ──────────────────────────────────────
+      - name: List release artifacts
+        shell: bash
+        run: ls -lh release/ || true
+
+      # ── Upload artifacts for the release job ─────────────────────────────────
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: warn
+          retention-days: 5
+
+  # ── Create GitHub Release ───────────────────────────────────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Download all platform artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: List downloaded artifacts
+        run: ls -lhR release-artifacts/
+
+      # Create (or update) the GitHub Release and upload all assets
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "RTSP Web Player ${{ github.ref_name }}"
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
+          generate_release_notes: true
+          files: release-artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
