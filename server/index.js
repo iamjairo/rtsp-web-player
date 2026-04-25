@@ -87,10 +87,10 @@ app.post('/api/streams', async (req, res) => {
       });
     }
 
-    // Validar ID del stream (solo nombre simple, sin rutas)
+    // Validar ID de stream (solo identificadores simples, sin rutas)
     if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(id)) {
       return res.status(400).json({
-        error: 'El campo id solo puede contener letras, números, guion y guion bajo'
+        error: 'El campo id solo puede contener letras, números, guion (-) y guion bajo (_)'
       });
     }
 
