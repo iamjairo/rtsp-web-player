@@ -40,7 +40,7 @@ export function AddCameraForm({ onAdd }: AddCameraFormProps) {
       try {
         setIsConverting(true);
 
-        const streamId = `cam_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const streamId = `cam_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
         if (lowLatency) {
           // ── Low-latency path: RTSP → fMP4 → WebSocket ──────────────────────
