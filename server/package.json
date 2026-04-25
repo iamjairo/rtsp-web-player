@@ -23,6 +23,7 @@
     "node-nmap": "^4.0.0",
     "node-onvif": "^0.1.7",
     "tp-link-tapo-connect": "^2.0.8",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "express-rate-limit": "^8.4.1"
   }
 }

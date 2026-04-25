@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import http from 'http';
 import { fileURLToPath } from 'url';
+import rateLimit from 'express-rate-limit';
 import streamManager from './streamManager.js';
 import cameraDiscovery from './cameraDiscovery.js';
 import webSocketManager from './webSocketManager.js';
@@ -32,6 +33,13 @@ import fs from 'fs';
 if (fs.existsSync(staticDistPath)) {
   if (STATIC_PORT) {
     const staticApp = express();
+    const staticRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    staticApp.use(staticRateLimiter);
     staticApp.use(express.static(staticDistPath));
     staticApp.get('*', (_req, res) =>
       res.sendFile(path.join(staticDistPath, 'index.html'))
