@@ -1,5 +1,14 @@
-# ── Stage 1: Build the React/Vite frontend ──────────────────────────────────
+# -----------------------------------------------------------------------------
+#   Stage 1: Build the React/Vite frontend
+#   Install ALL build-time dependencies and compile / bundle the application.
+#   Nothing from this stage leaks into the runtime image except the artefacts
+#   copied explicitly with COPY --from=builder.
+# -----------------------------------------------------------------------------
+
 FROM node:20-alpine AS builder
+
+ARG APP_VERSION=1.0.0
+ARG BUILD_ENV=production
 
 WORKDIR /app
 
@@ -15,8 +24,21 @@ COPY public ./public
 # Build the frontend
 RUN npm run build
 
-# ── Stage 2: Production image ────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
+#   Stage 2: Production image
+#   Minimal image containing only what the application needs to run.
+# -----------------------------------------------------------------------------
+
 FROM node:20-alpine AS production
+
+# Metadata labels
+LABEL maintainer="iamjairo"
+LABEL org.opencontainers.image.title="rtsp-web-player"
+LABEL org.opencontainers.image.description="Stream multiple RTSP feeds in browser"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.url="https://github.com"
+LABEL org.opencontainers.image.source="https://github.com"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Install FFmpeg (required for RTSP → HLS / WebSocket transcoding)
 RUN apk add --no-cache ffmpeg
@@ -37,6 +59,15 @@ COPY server ./server
 # Backend API runs on port 3001; frontend is served on port 80.
 COPY --from=builder /app/dist ./server/public_dist
 
+# Create a non-root user and switch to it
+RUN addgroup -g 1001 -S appgroup \
+    && adduser -u 1001 -S -G appgroup -h /home/appuser appuser
+
+# Ensure the app directory is owned by the non-root user
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
 # Expose both ports
 EXPOSE 80 3001
 
@@ -47,7 +78,7 @@ ENV PORT=3001 \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget -qO- http://localhost:${PORT}/api/health || exit 1
+  CMD wget -qO- http://localhost:3001/api/health || exit 1
 
 # Start the backend (also serves the static frontend)
 CMD ["node", "server/index.js"]

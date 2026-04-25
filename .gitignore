@@ -24,6 +24,7 @@ release/
 !.vscode/extensions.json
 .idea
 .DS_Store
+@eaDir/
 *.suo
 *.ntvs*
 *.njsproj
