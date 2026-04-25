@@ -87,8 +87,15 @@ app.post('/api/streams', async (req, res) => {
       });
     }
 
-    // Validar formato RTSP URL (rtsp:// y rtsps:// para RTSP sobre TLS)
-    if (!rtspUrl.startsWith('rtsp://') && !rtspUrl.startsWith('rtsps://')) {
+    // Validar ID para evitar path traversal (solo caracteres seguros)
+    if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(id)) {
+      return res.status(400).json({
+        error: 'El campo id contiene caracteres inválidos'
+      });
+    }
+
+    // Validar formato RTSP URL
+    if (!rtspUrl.startsWith('rtsp://')) {
       return res.status(400).json({
         error: 'La URL debe comenzar con rtsp:// o rtsps://'
       });
