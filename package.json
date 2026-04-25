@@ -1,0 +1,99 @@
+{
+  "name": "rtsp-web-player",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "server": "cd server && npm start",
+    "server:install": "cd server && npm install",
+    "setup": "npm install && cd server && npm install",
+    "electron": "NODE_ENV=development electron .",
+    "electron:dev": "NODE_ENV=development concurrently \"npm run dev\" \"wait-on http://localhost:5173 && npm run electron\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:dist": "npm run build && electron-builder --dir",
+    "dist": "npm run electron:build"
+  },
+  "dependencies": {
+    "hls.js": "^1.6.16",
+    "lucide-react": "^0.553.0",
+    "node-nmap": "^4.0.0",
+    "node-onvif": "^0.1.7",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "tp-link-tapo-connect": "^2.0.15"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.5.0",
+    "concurrently": "^9.1.2",
+    "electron": "^39.8.5",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^16.4.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.4.18",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.59.0",
+    "vite": "^7.3.2",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.rtsp.webplayer",
+    "productName": "RTSP Web Player",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node",
+      "**/ffmpeg-static/ffmpeg",
+      "**/ffmpeg-static/ffmpeg.exe"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "server",
+        "to": "server",
+        "filter": [
+          "**/*",
+          "!streams/**/*",
+          "!node_modules/.cache/**/*",
+          "!node_modules/.bin/**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.video",
+      "target": ["dmg", "zip"],
+      "icon": "public/icon.png"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "public/icon.png"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Video",
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
