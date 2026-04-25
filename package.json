@@ -51,21 +51,30 @@
   "build": {
     "appId": "com.rtsp.webplayer",
     "productName": "RTSP Web Player",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node",
+      "**/ffmpeg-static/ffmpeg",
+      "**/ffmpeg-static/ffmpeg.exe"
+    ],
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "server/**/*",
-      "!server/streams/**/*",
       "package.json"
     ],
     "extraResources": [
       {
         "from": "server",
         "to": "server",
-        "filter": ["**/*", "!streams/**/*", "!node_modules/**/*"]
+        "filter": [
+          "**/*",
+          "!streams/**/*",
+          "!node_modules/.cache/**/*",
+          "!node_modules/.bin/**/*"
+        ]
       }
     ],
     "mac": {
