@@ -50,7 +50,13 @@ if (fs.existsSync(staticDistPath)) {
   } else {
     // Single-port mode: serve frontend under / and API under /api
     app.use(express.static(staticDistPath));
-    app.get('*', (req, res, next) => {
+    const singlePortFrontendRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.get('*', singlePortFrontendRateLimiter, (req, res, next) => {
       if (req.path.startsWith('/api') || req.path.startsWith('/streams')) return next();
       res.sendFile(path.join(staticDistPath, 'index.html'));
     });
