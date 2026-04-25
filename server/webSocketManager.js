@@ -108,7 +108,7 @@ class WebSocketStreamManager {
       }
       ws.on('close', () => clients.delete(ws));
       ws.on('error', (err) => {
-        console.error(`[WS ${streamId}] client error:`, err.message);
+        console.error('[WS %s] client error: %s', streamId, err.message);
         clients.delete(ws);
       });
     });
