@@ -177,7 +177,7 @@ class WebSocketStreamManager {
       });
 
       proc.on('error', (err) => {
-        console.error(`[WebSocketManager] FFmpeg error for ${streamId}:`, err.message);
+        console.error('[WebSocketManager] FFmpeg error for %s: %s', streamId, err.message);
         this.wsStreams.delete(streamId);
         if (!ffmpegReady) reject(err);
       });
