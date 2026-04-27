@@ -5,7 +5,7 @@
 #   copied explicitly with COPY --from=builder.
 # -----------------------------------------------------------------------------
 
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 ARG APP_VERSION=1.0.0
 ARG BUILD_ENV=production
@@ -29,7 +29,7 @@ RUN npm run build
 #   Minimal image containing only what the application needs to run.
 # -----------------------------------------------------------------------------
 
-FROM node:20-alpine AS production
+FROM node:25-alpine AS production
 
 # Metadata labels
 LABEL maintainer="iamjairo"
