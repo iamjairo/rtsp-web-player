@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "hls.js": "^1.6.16",
-    "lucide-react": "^0.553.0",
+    "lucide-react": "^1.11.0",
     "node-nmap": "^4.0.0",
     "node-onvif": "^0.1.7",
     "react": "^19.1.1",
